@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Production Reporting System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial;
+      max-width: 900px;
+      margin: auto;
+    }
+    h2, h3 {
+      text-align: center;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .full {
+      grid-column: span 2;
+    }
+    label {
+      font-weight: bold;
+      font-size: 14px;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    textarea {
+      resize: vertical;
+    }
+    button {
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      font-size: 13px;
+    }
+    th {
+      background: #f2f2f2;
+    }
+    @media (max-width: 600px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .full {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>🏭 Production Reporting</h2>
+
+<div class="form-grid">
+
+  <div>
+    <label>Area</label>
+    <select id="area" onchange="updateLines()">
+      <option value="">Select Area</option>
+      <option value="DV">DV</option>
+      <option value="DR">DR</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Line</label>
+    <select id="line"></select>
+  </div>
+
+  <div>
+    <label>Date</label>
+    <input type="date" id="date">
+  </div>
+
+  <div>
+    <label>Line Running Until</label>
+    <select id="running">
+      <option>5:00 AM/PM</option>
+      <option>5:30 AM/PM</option>
+      <option>6:00 AM/PM</option>
+      <option>7:30 AM/PM</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Plan</label>
+    <input type="number" id="plan" oninput="updateVariance()">
+  </div>
+
+  <div>
+    <label>Actual</label>
+    <input type="number" id="actual" oninput="updateVariance()">
+  </div>
+
+  <div>
+    <label>Variance</label>
+    <input type="number" id="variance" readonly>
+  </div>
+
+  <div>
+    <label>Pax</label>
+    <input type="number" id="pax">
+  </div>
+
+  <div>
+    <label>NG</label>
+    <input type="number" id="ng">
+  </div>
+
+  <div>
+    <label>GR Finding</label>
+    <input type="text" id="gr">
+  </div>
+
+  <div>
+    <label>Missing Part</label>
+    <input type="text" id="missing">
+  </div>
+
+  <div class="full">
+    <label>Remarks</label>
+    <textarea id="remarks" rows="3"></textarea>
+  </div>
+
+</div>
+
+<br>
+
+<button style="background:#2196F3;color:white;" onclick="addDraft()">➕ Add to Draft</button>
+
+<button style="background:#4CAF50;color:white;margin-top:5px;" onclick="submitAll()">
+✅ Submit (Central Excel)
+</button>
+
+<button
+  style="margin-top:5px;"
+  onclick="window.open('https://konicaminoltaglobal-my.sharepoint.com/:x:/r/personal/52921jgn_konicaminolta_com/Documents/Output%20DVDR/Output%20Test.xlsx?web=1','_blank')">
+📊 Open Central Performance Dashboard
+</button>
+
+<br><br>
+
+<h3>📋 Draft Records (Local Only)</h3>
+<table id="table"></table>
+
+<script>
+const POWER_AUTOMATE_URL = "https://default9d23e93fba4f4581bccfa364fdcc27.2b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/db26fbea494d44648ca5001375735dce/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=vZBXn5aduMNS9ze9AAVGCAR1WpgusPTgkjxhWirIohM";
+
+var areaLines = {
+  DV: ["EDV1 A","EDV1 B","EDV2 A","EDV2 B","ZDV","HDR","HDV"],
+  DR: ["ZDR","EDR1 A","EDR3 A","EDR3 B","EDR Auto A","EDR Auto B"]
+};
+
+var draftData = [];
+
+function updateLines() {
+  line.innerHTML = "";
+  if (areaLines[area.value]) {
+    areaLines[area.value].forEach(l => {
+      var o = document.createElement("option");
+      o.text = l;
+      line.add(o);
+    });
+  }
+}
+
+function updateVariance() {
+  variance.value = (Number(actual.value) || 0) - (Number(plan.value) || 0);
+}
+
+function getFormData() {
+  return {
+    area: area.value,
+    line: line.value,
+    date: date.value,
+    plan: Number(plan.value) || 0,
+    actual: Number(actual.value) || 0,
+    variance: Number(variance.value) || 0,
+    grFinding: gr.value,
+    ng: Number(ng.value) || 0,
+    missingPart: missing.value,
+    running: running.value,
+    pax: Number(pax.value) || 0,
+    remarks: remarks.value
+  };
+}
+
+function addDraft() {
+  draftData.push(getFormData());
+  renderTable();
+}
+
+function submitAll() {
+  if (draftData.length === 0) return alert("No data to submit");
+
+  draftData.forEach(d => {
+    fetch(POWER_AUTOMATE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(d)
+    });
+  });
+
+  draftData = [];
+  renderTable();
+  alert("Submitted to central Excel successfully ✅");
+}
+
+function renderTable() {
+  table.innerHTML = `
+    <tr>
+      <th>Area</th><th>Line</th><th>Date</th>
+      <th>Plan</th><th>Actual</th><th>Variance</th>
+      <th>GR</th><th>NG</th><th>Missing</th>
+      <th>Running</th><th>Pax</th><th>Remarks</th>
+    </tr>`;
+  draftData.forEach(d => {
+    var r = table.insertRow();
+    Object.values(d).forEach(v => r.insertCell().innerText = v);
+  });
+}
+
+renderTable();
+</script>
+
+</body>
+</html>
