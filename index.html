@@ -9,6 +9,7 @@
       font-family: Arial;
       max-width: 900px;
       margin: auto;
+      padding: 10px;
     }
     h2, h3 {
       text-align: center;
@@ -36,6 +37,7 @@
     }
     button {
       cursor: pointer;
+      margin-top: 5px;
     }
     table {
       width: 100%;
@@ -138,27 +140,33 @@
 
 </div>
 
-<br>
-
 <button style="background:#2196F3;color:white;" onclick="addDraft()">➕ Add to Draft</button>
 
-<button style="background:#4CAF50;color:white;margin-top:5px;" onclick="submitAll()">
+<button style="background:#4CAF50;color:white;" onclick="submitAll()">
 ✅ Submit (Central Excel)
 </button>
 
-<button
-  style="margin-top:5px;"
-  onclick="window.open('https://konicaminoltaglobal-my.sharepoint.com/:x:/r/personal/52921jgn_konicaminolta_com/Documents/Output%20DVDR/Output%20Test.xlsx?web=1','_blank')">
-📊 Open Central Performance Dashboard
+<button onclick="window.open('https://konicaminoltaglobal-my.sharepoint.com/:x:/r/personal/52921jgn_konicaminolta_com/Documents/Output%20DVDR/Output%20Test.xlsx?web=1','_blank')">
+📊 Open Central Performance Dashboard (PC Only)
 </button>
-
-<br><br>
 
 <h3>📋 Draft Records (Local Only)</h3>
 <table id="table"></table>
 
+<hr>
+
+<h2>Central Performance Dashboard (Read‑Only)</h2>
+
+<p style="font-size:14px; color:#555; text-align:center;">
+Latest snapshot. For live interactive dashboard, use a company PC.
+</p>
+
+<img src="dashboard.png"
+     alt="Central Performance Dashboard"
+     style="width:100%; max-width:900px; border:1px solid #ccc; display:block; margin:auto;">
+
 <script>
-const POWER_AUTOMATE_URL = "https://default9d23e93fba4f4581bccfa364fdcc27.2b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/db26fbea494d44648ca5001375735dce/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=vZBXn5aduMNS9ze9AAVGCAR1WpgusPTgkjxhWirIohM";
+const POWER_AUTOMATE_URL = "PUT_YOUR_POWER_AUTOMATE_URL_HERE";
 
 var areaLines = {
   DV: ["EDV1 A","EDV1 B","EDV2 A","EDV2 B","ZDV","HDR","HDV"],
